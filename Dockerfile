@@ -6,23 +6,19 @@ WORKDIR /usr/share/elasticsearch
 
 # Install the necessary dependencies for SSL setup
 USER root
-RUN bin/elasticsearch-certutil cert --silent --pem --out /usr/share/elasticsearch/config/certificates.zip
+RUN elasticsearch-certutil cert --silent --pem --out /usr/share/elasticsearch/config/certificates.zip
 
 # Unzip the certificates
 RUN unzip /usr/share/elasticsearch/config/certificates.zip -d /usr/share/elasticsearch/config
 
-# Copy custom elasticsearch.yml configuration
+# Copy the SSL configuration file into the container
+COPY --chown=1000:0 elasticsearch-ssl-config.yml /usr/share/elasticsearch/config/elasticsearch-ssl-config.yml
+
+# Copy the custom elasticsearch.yml configuration file
 COPY --chown=1000:0 config/elasticsearch.yml /usr/share/elasticsearch/config/elasticsearch.yml
 
-# Add SSL configurations to elasticsearch.yml using 'tee'
-RUN echo '
-xpack.security.enabled: true
-xpack.security.transport.ssl.enabled: true
-xpack.security.transport.ssl.verification_mode: certificate
-xpack.security.transport.ssl.key: /usr/share/elasticsearch/config/elastic-certificates/elastic-certificates.key
-xpack.security.transport.ssl.certificate: /usr/share/elasticsearch/config/elastic-certificates/elastic-certificates.crt
-xpack.security.transport.ssl.certificate_authorities: /usr/share/elasticsearch/config/elastic-certificates/ca.crt
-' | tee -a /usr/share/elasticsearch/config/elasticsearch.yml
+# Optionally, you can append the SSL config from the file to `elasticsearch.yml`
+RUN cat /usr/share/elasticsearch/config/elasticsearch-ssl-config.yml >> /usr/share/elasticsearch/config/elasticsearch.yml
 
 # Allow Elasticsearch to create `elasticsearch.keystore`
 RUN chmod g+ws /usr/share/elasticsearch/config
@@ -32,6 +28,3 @@ USER 1000:0
 
 # Expose the default Elasticsearch ports
 EXPOSE 9200 9300
-
-# Start Elasticsearch
-CMD ["bin/elasticsearch"]
