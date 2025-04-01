@@ -6,10 +6,13 @@ WORKDIR /usr/share/elasticsearch
 
 # Install the necessary dependencies for SSL setup
 USER root
-RUN elasticsearch-certutil cert --silent --pem --out /usr/share/elasticsearch/config/certificates.zip
+RUN bin/elasticsearch-certutil cert --silent --pem --out /usr/share/elasticsearch/config/certificates.zip
 
-# Unzip the certificates
-RUN unzip /usr/share/elasticsearch/config/certificates.zip -d /usr/share/elasticsearch/config
+# Unzip the certificates and move them to the correct directory
+RUN unzip /usr/share/elasticsearch/config/certificates.zip -d /usr/share/elasticsearch/config/ && \
+    mv /usr/share/elasticsearch/config/elastic-certificates.p12 /usr/share/elasticsearch/config/elastic-certificates.zip && \
+    mv /usr/share/elasticsearch/config/elastic-certificates.crt /usr/share/elasticsearch/config/elastic-certificates/ && \
+    mv /usr/share/elasticsearch/config/elastic-certificates.key /usr/share/elasticsearch/config/elastic-certificates/
 
 # Copy the SSL configuration file into the container
 COPY --chown=1000:0 elasticsearch-ssl-config.yml /usr/share/elasticsearch/config/elasticsearch-ssl-config.yml
