@@ -4,11 +4,14 @@ FROM docker.elastic.co/elasticsearch/elasticsearch:7.16.1@sha256:1000eae211ce9e3
 # Set the working directory
 WORKDIR /usr/share/elasticsearch
 
-# Install the necessary dependencies for SSL setup
+# Install necessary dependencies (including unzip)
 USER root
+RUN apt-get update && apt-get install -y unzip
+
+# Generate SSL certificates using elasticsearch-certutil
 RUN bin/elasticsearch-certutil cert --silent --pem --out /usr/share/elasticsearch/config/certificates.zip
 
-# Unzip the certificates and move them to the correct directory
+# Unzip the certificates and organize them in the correct directory
 RUN unzip /usr/share/elasticsearch/config/certificates.zip -d /usr/share/elasticsearch/config/ && \
     mv /usr/share/elasticsearch/config/elastic-certificates.p12 /usr/share/elasticsearch/config/elastic-certificates.zip && \
     mv /usr/share/elasticsearch/config/elastic-certificates.crt /usr/share/elasticsearch/config/elastic-certificates/ && \
